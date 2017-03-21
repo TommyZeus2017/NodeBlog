@@ -1,14 +1,16 @@
+// import modules
 var express = require('express');
-var path = require('path');
 var app = express();
-
-//
-// reference : mongoosejs.com/docs/api.html
-//
+var path = require('path');
 var mongoose = require('mongoose');
+var bodyParser = require('body-parser');
 
-// mongoose.connect(process.env.MONGO_DB_NODEBLOG);
-mongoose.connect("mongodb://root:admin@ds061676.mlab.com:61676/nodeblog");
+//===============================================================
+// reference : mongoosejs.com/docs/api.html
+//===============================================================
+
+// connect database
+mongoose.connect(process.env.MONGO_DB_NODEBLOG);
 
 var db = mongoose.connection;
 
@@ -20,12 +22,23 @@ db.on("error", function (err) {
     console.log("DB ERROR: ", err);
 });
 
+// model setting
+// reference: mongoosejs.com/docs/api.html#schematype_SchemaType-default
+var postSchema = mongoose.Schema({
+    title: {type: String, required: true},
+    body: {type: String, required: true},
+    createdAt: {type: Date, default: Date.now},
+    updatedAt: Date
+});
+
+var Post = mongoose.model('post', postSchema);
+
 var dataSchema = mongoose.Schema({
     name: String,
     count: Number
 });
 
-var Data = mongoose.model('datas', dataSchema);
+var Data = mongoose.model('data', dataSchema);
 
 Data.findOne({name: "myData"}, function (err, data) {
     if (err)
@@ -40,8 +53,61 @@ Data.findOne({name: "myData"}, function (err, data) {
     }
 });
 
+// view setting
 app.set("view engine", "ejs");
+app.use(bodyParser.json());
+
+// set middleware
 app.use(express.static(path.join(__dirname, '/public')));
+
+// set routes
+// reference: mongoosejs.com/docs/api.html#model_Model.find
+app.get('/posts', function (req, res) {
+    Post.find({}, function (err, posts) {
+        if (err)
+            res.json({success: false, message: err});
+
+        res.json({success: true, data: posts});
+    });
+}); // index
+
+app.post('/posts', function (req, res) {
+    Post.create(req.body.post, function (err, post) {
+        if (err)
+            return res.json({success: false, message: err});
+
+        res.json({success: true, data: post});
+    });
+}); // create
+
+app.get('/posts/:id', function (req, res) {
+    Post.findById(req.params.id, function (err, post) {
+        if (err)
+            return res.json({success: false, message: err});
+
+        res.json({success: true, data: post});
+    });
+}); // show
+
+app.put('/posts/:id', function (req, res) {
+    req.body.post.updatedAt = Date.now();
+
+    Post.findByIdAndUpdate(req.params.id, req.body.post, function (err, post) {
+        if (err)
+            return res.json({success: false, message: err});
+
+        res.json({success: true, message: post._id + " updated"});
+    });
+}); // update
+
+app.delete('/posts/:id', function (req, res) {
+    Post.findByIdAndRemove(req.params.id, function (err, post) {
+        if (err)
+            return res.json({success: false, message: err});
+
+        res.json({success: true, message: post._id + " deleted"});
+    });
+}); // destroy
 
 app.get('/', function (req, res) {
     Data.findOne({name : "myData"}, function (err, data) {
@@ -108,6 +174,7 @@ function setCounter(res, number)
     });
 }
 
+// start server
 app.listen(3000, function() {
     console.log(__dirname);
     console.log('Service On!');
