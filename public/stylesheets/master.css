@@ -86,7 +86,7 @@ footer{
 }
 .posts .posts_form,
 .login .login_form,
-.users .users_form{
+.users .users_form {
     display:block;
     width: 400px;
     margin: 0 auto;
@@ -94,7 +94,7 @@ footer{
 }
 .posts .posts_form label,
 .login .login_form label,
-.users .users_form label{
+.users .users_form label {
     display:block;
     margin:5px 0;
 }

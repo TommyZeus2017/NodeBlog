@@ -10,17 +10,15 @@
             <% include ../partials/header %>
         </header>
         <div class="login">
-            <% include partials/top %>
-
             <!-- main start -->
 
             <div>
-                <h3>Loggin</h3>
+                <h3>Login</h3>
                 <form class="login_form" action="/login" method="post">
                     <label for="">Email</label>
                     <input type="text" name="email" value="<%= email %>">
                     <label for="">Password</label>
-                    <input type="text" name="password" value="">
+                    <input type="password" name="password" value="">
                     <% loginError.forEach(function(e) { %>
                         <p class="error_message"><%= e %></p>
                     <% }) %>

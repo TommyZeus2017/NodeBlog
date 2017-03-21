@@ -18,6 +18,7 @@
   "homepage": "https://github.com/TommyZeus2017/NodeBlog#readme",
   "dependencies": {
     "async": "^2.1.5",
+    "bcrypt-nodejs": "0.0.3",
     "body-parser": "^1.17.1",
     "connect-flash": "^0.1.1",
     "ejs": "^2.5.6",
