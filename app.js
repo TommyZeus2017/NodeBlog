@@ -59,6 +59,7 @@ var User = mongoose.model('user', userSchema);
 var postSchema = mongoose.Schema({
     title: {type: String, required: true},
     body: {type: String, required: true},
+    author: {type: mongoose.Schema.Types.ObjectId, ref:'user', required: true},
     createdAt: {type: Date, default: Date.now},
     updatedAt: Date
 });
@@ -231,7 +232,7 @@ app.put('/users/:id', isLoggedIn, checkUserRegValidation, function (req, res) {
 // set posts routes
 // reference: mongoosejs.com/docs/api.html#model_Model.find
 app.get('/posts', function (req, res) {
-    Post.find({}).sort('-createdAt').exec(function (err, posts) {
+    Post.find({}).populate('author').sort('-createdAt').exec(function (err, posts) {
         if (err)
             return res.json({success: false, message: err});
 
@@ -239,11 +240,13 @@ app.get('/posts', function (req, res) {
     });
 }); // index
 
-app.get('/posts/new', function (req, res) {
-    res.render('posts/new');
+app.get('/posts/new', isLoggedIn, function (req, res) {
+    res.render('posts/new', {user: req.user});
 }); // new
 
-app.post('/posts', function (req, res) {
+app.post('/posts', isLoggedIn, function (req, res) {
+    req.body.post.author = req.user._id;
+
     Post.create(req.body.post, function (err, post) {
         if (err)
             return res.json({success: false, message: err});
@@ -253,40 +256,59 @@ app.post('/posts', function (req, res) {
 }); // create
 
 app.get('/posts/:id', function (req, res) {
-    Post.findById(req.params.id, function (err, post) {
+    Post.findById(req.params.id).populate('author').exec(function (err, post) {
         if (err)
             return res.json({success: false, message: err});
 
-        res.render("posts/show", {data: post});
+        res.render("posts/show", {data: post, user: req.user});
     });
 }); // show
 
-app.get('/posts/:id/edit', function (req, res) {
+app.get('/posts/:id/edit', isLoggedIn, function (req, res) {
     Post.findById(req.params.id, function (err, post) {
         if (err)
             return res.json({success: false, message: err});
 
-        res.render("posts/edit", {data: post});
+        if (!req.user._id.equals(post.author))
+            return res.json({success: false, message:"Unauthorized Attempt"})
+
+        res.render("posts/edit", {data: post, user: req.user});
     });
 }); // edit
 
-app.put('/posts/:id', function (req, res) {
+app.put('/posts/:id', isLoggedIn, function (req, res) {
     req.body.post.updatedAt = Date.now();
 
-    Post.findByIdAndUpdate(req.params.id, req.body.post, function (err, post) {
+    Post.findById(req.params.id, function (err, post) {
         if (err)
-            return res.json({success: false, message: err});
+            return res.json({success:false, message: err});
 
-        res.redirect('/posts/' + req.params.id);
+        if (!req.user._id.equals(post.author))
+            return res.json({success: false, message: "Unauthorized Attempt"});
+
+        Post.findByIdAndUpdate(req.params.id, req.body.post, function (err, post) {
+            if (err)
+                return res.json({success: false, message: err});
+
+            res.redirect('/posts/' + req.params.id);
+        });
     });
 }); // update
 
 app.delete('/posts/:id', function (req, res) {
-    Post.findByIdAndRemove(req.params.id, function (err, post) {
+    Post.findById(req.params.id, function (err, post) {
         if (err)
-            return res.json({success: false, message: err});
+            return res.json({success:false, message: err});
 
-        res.redirect('/posts');
+        if (!req.user._id.equals(post.author))
+            return res.json({success: false, message: "Unauthorized Attempt"});
+
+        Post.findByIdAndRemove(req.params.id, function (err, post) {
+            if (err)
+                return res.json({success: false, message: err});
+
+            res.redirect('/posts');
+        });
     });
 }); // destroy
 

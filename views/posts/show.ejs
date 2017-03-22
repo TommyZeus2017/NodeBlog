@@ -28,14 +28,19 @@
                 <% } %>
 
                 <p class="body"><%= data.body %></p>
-                <div class="tools">
-                    <a href="/posts/<%=data._id%>/edit"><button>Edit</button></a>
+                <div class="float_right">Author: <%= data.author.nickname %></div>
 
-                    <!-- Delete button here -->
-                    <form class="btn_delete" action="/posts/<%=data._id%>?_method=delete" method="post">
-                        <button type="submit">Delete</button>
-                    </form>
-                </div>
+                <% if (user && user.equals(data.author._id) { %>
+                    <div class="tools">
+                        <a href="/posts/<%=data._id%>/edit"><button>Edit</button></a>
+
+                        <!-- Delete button here -->
+                        <form class="btn_delete" action="/posts/<%=data._id%>?_method=delete" method="post">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </div>
+                <% } %>
+
                 <a href="/posts"><button>Back</button></a>
             </div>
 
