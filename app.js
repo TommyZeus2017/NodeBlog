@@ -236,7 +236,7 @@ app.get('/posts', function (req, res) {
         if (err)
             return res.json({success: false, message: err});
 
-        res.render("posts/index", {data: posts, user: req.user});
+        res.render("posts/index", {posts: posts, user: req.user});
     });
 }); // index
 
@@ -260,7 +260,7 @@ app.get('/posts/:id', function (req, res) {
         if (err)
             return res.json({success: false, message: err});
 
-        res.render("posts/show", {data: post, user: req.user});
+        res.render("posts/show", {post: post, user: req.user});
     });
 }); // show
 
@@ -272,43 +272,33 @@ app.get('/posts/:id/edit', isLoggedIn, function (req, res) {
         if (!req.user._id.equals(post.author))
             return res.json({success: false, message:"Unauthorized Attempt"})
 
-        res.render("posts/edit", {data: post, user: req.user});
+        res.render("posts/edit", {post: post, user: req.user});
     });
 }); // edit
 
 app.put('/posts/:id', isLoggedIn, function (req, res) {
     req.body.post.updatedAt = Date.now();
 
-    Post.findById(req.params.id, function (err, post) {
+    Post.findByIdAndUpdate({_id: req.params.id, author: req.user.id}, req.body.post, function (err, post) {
         if (err)
-            return res.json({success:false, message: err});
+            return res.json({success: false, message: err});
 
-        if (!req.user._id.equals(post.author))
-            return res.json({success: false, message: "Unauthorized Attempt"});
+        if (!post)
+            return res.json({success: false, message: "No data found to update"});
 
-        Post.findByIdAndUpdate(req.params.id, req.body.post, function (err, post) {
-            if (err)
-                return res.json({success: false, message: err});
-
-            res.redirect('/posts/' + req.params.id);
-        });
+        res.redirect('/posts/' + req.params.id);
     });
 }); // update
 
 app.delete('/posts/:id', function (req, res) {
-    Post.findById(req.params.id, function (err, post) {
+    Post.findByIdAndRemove({_id: req.params.id, author: req.user.id}, function (err, post) {
         if (err)
-            return res.json({success:false, message: err});
+            return res.json({success: false, message: err});
 
-        if (!req.user._id.equals(post.author))
-            return res.json({success: false, message: "Unauthorized Attempt"});
+        if (!post)
+            return res.json({success: false, message: "No data found to delete"});
 
-        Post.findByIdAndRemove(req.params.id, function (err, post) {
-            if (err)
-                return res.json({success: false, message: err});
-
-            res.redirect('/posts');
-        });
+        res.redirect('/posts');
     });
 }); // destroy
 
